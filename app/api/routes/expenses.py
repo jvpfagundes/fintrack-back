@@ -27,31 +27,31 @@ async def create_expense(expense_data: ExpenseCreate,
 
 
 @router.get('/cards')
-async def get_expenses_cards(current_user: User = Depends(get_current_user)):
+async def get_expenses_cards(dat_start: str | None = Query(None), dat_end: str | None = Query(None), current_user: User = Depends(get_current_user)):
     user_id = current_user.id
 
-    response = await Expenses(user_id).get_cards()
+    response = await Expenses(user_id).get_cards(dat_start=dat_start, dat_end=dat_end)
 
     return JSONResponse(content=response, status_code=response['status_code'])
 
 @router.get('/table')
-async def get_expenses_table(current_user: User = Depends(get_current_user)):
+async def get_expenses_table(dat_start: str | None = Query(None), dat_end: str | None = Query(None), current_user: User = Depends(get_current_user)):
     user_id = current_user.id
 
-    response = await Expenses(user_id).get_table()
+    response = await Expenses(user_id).get_table(dat_start=dat_start, dat_end=dat_end)
 
     return JSONResponse(content=response, status_code=response['status_code'])
 
 @router.get('/graphic/categories')
-async def get_categories_graphic(current_user: User = Depends(get_current_user)):
+async def get_categories_graphic(dat_start: str | None = Query(None), dat_end: str | None = Query(None), current_user: User = Depends(get_current_user)):
     user_id = current_user.id
 
-    response = await Expenses(user_id).get_categories_graphic()
+    response = await Expenses(user_id).get_categories_graphic(dat_start=dat_start, dat_end=dat_end)
     return JSONResponse(content=response, status_code=response['status_code'])
 
 @router.get('/graphic/days')
-async def get_days_graphic(current_user: User = Depends(get_current_user)):
+async def get_days_graphic(dat_start: str | None = Query(None), dat_end: str | None = Query(None), current_user: User = Depends(get_current_user)):
     user_id = current_user.id
 
-    response = await Expenses(user_id).get_days_graphic()
+    response = await Expenses(user_id).get_days_graphic(dat_start=dat_start, dat_end=dat_end)
     return JSONResponse(content=response, status_code=response['status_code'])
