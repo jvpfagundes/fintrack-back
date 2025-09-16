@@ -1,7 +1,7 @@
 """"""
 
 """CREATE TABLE IF NOT EXISTS users (
-        id uuid NOT NULL DEFAULT gen_random_uuid(),
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         phone_number VARCHAR(255) UNIQUE NOT NULL,
         hashed_password VARCHAR(255) NOT NULL,
         first_name VARCHAR(255),
@@ -15,6 +15,7 @@
         created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         deleted_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        username varchar(255),
         language VARCHAR(255)
     );
 -- Tabela de categorias de despesa

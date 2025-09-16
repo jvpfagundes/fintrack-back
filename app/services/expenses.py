@@ -30,7 +30,16 @@ class Expenses(SQLQueryAsync):
 
 
     @Response(desc_error="Error fetching cards.", return_list=["cards_dict"])
-    async def get_cards(self):
+    async def get_cards(self, dat_start: str | None = None, dat_end: str | None = None):
+        where_date = ""
+        params = dict(user_id=self.user_id)
+        if dat_start:
+            where_date += " and e.expense_date >= :dat_start"
+            params["dat_start"] = str_to_date(dat_start=dat_start)
+        if dat_end:
+            where_date += " and e.expense_date <= :dat_end"
+            params["dat_end"] = str_to_date(dat_end=dat_end)
+
         return await self.select(f"""
         SELECT 
             (SELECT c.name
@@ -39,19 +48,31 @@ class Expenses(SQLQueryAsync):
                 on c.id = e.category_id
               where e.status = true 
                     and c.status = true 
+                    and e.user_id = :user_id
+                    {where_date}
              GROUP BY c.id
              ORDER BY SUM(amount) DESC
              LIMIT 1) AS top_category,
             SUM(amount)::float AS total_expenses,
             count(id) as last_transactions
-        FROM expenses
-        where user_id = :user_id
-              and status = true;
-        """, parameters=dict(user_id=self.user_id), is_first=True)
+        FROM expenses e
+        where e.user_id = :user_id
+              and e.status = true
+              {where_date};
+        """, parameters=params, is_first=True)
 
 
     @Response(desc_error="Error fetching table.", return_list=["expenses_list"])
-    async def get_table(self):
+    async def get_table(self, dat_start: str | None = None, dat_end: str | None = None):
+        where_date = ""
+        params = dict(user_id=self.user_id)
+        if dat_start:
+            where_date += " and e.expense_date >= :dat_start"
+            params["dat_start"] = str_to_date(dat_start=dat_start)
+        if dat_end:
+            where_date += " and e.expense_date <= :dat_end"
+            params["dat_end"] = str_to_date(dat_end=dat_end)
+
         return await self.select(f"""
         select to_char(e.expense_date, 'dd/mm/yyyy') as expense_date,
                e.amount::float as value,
@@ -60,11 +81,21 @@ class Expenses(SQLQueryAsync):
         join expense_category c 
             on c.id = e.category_id
         where e.status = true 
-              and e.user_id = :user_id;
-        """, parameters=dict(user_id=self.user_id))
+              and e.user_id = :user_id
+              {where_date};
+        """, parameters=params)
 
     @Response(desc_error="Error fetching categories graphic.", return_list=['categories_list'])
-    async def get_categories_graphic(self):
+    async def get_categories_graphic(self, dat_start: str | None = None, dat_end: str | None = None):
+        where_date = ""
+        params = dict(user_id=self.user_id)
+        if dat_start:
+            where_date += " and e.expense_date >= :dat_start"
+            params["dat_start"] = str_to_date(dat_start=dat_start)
+        if dat_end:
+            where_date += " and e.expense_date <= :dat_end"
+            params["dat_end"] = str_to_date(dat_end=dat_end)
+
         ls_categories = await self.select(f"""
         select c.name,
                sum(e.amount)::float as value
@@ -74,8 +105,9 @@ class Expenses(SQLQueryAsync):
         where e.status = true 
               and c.status = true 
               and e.user_id = :user_id
+              {where_date}
         group by c.name;
-        """, parameters=dict(user_id=self.user_id)) or []
+        """, parameters=params) or []
         total = sum(i['value'] for i in ls_categories)
         for i in ls_categories:
             i['perc'] = round(i['value'] / total * 100, 2)
@@ -83,12 +115,22 @@ class Expenses(SQLQueryAsync):
 
 
     @Response(desc_error="Error fetching days graphic.", return_list=['days_list'])
-    async def get_days_graphic(self):
+    async def get_days_graphic(self, dat_start: str | None = None, dat_end: str | None = None):
+        where_date = ""
+        params = dict(user_id=self.user_id)
+        if dat_start:
+            where_date += " and e.expense_date >= :dat_start"
+            params["dat_start"] = str_to_date(dat_start=dat_start)
+        if dat_end:
+            where_date += " and e.expense_date <= :dat_end"
+            params["dat_end"] = str_to_date(dat_end=dat_end)
+
         return await self.select(f"""
         select extract(day from e.expense_date)::integer as day,
                sum(e.amount)::float as value
         from expenses e
         where e.status = true
         and e.user_id = :user_id
+        {where_date}
         group by e.expense_date;
-        """, parameters=dict(user_id=self.user_id))
+        """, parameters=params)
