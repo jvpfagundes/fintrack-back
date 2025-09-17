@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from app.schemas.auth import User
 from app.core.auth import get_current_user
 from app.services.expenses import Expenses
-from app.schemas.expenses import  ExpenseCreate
+from app.schemas.expenses import  ExpenseCreate, ExpenseDelete
 router = APIRouter()
 
 
@@ -20,8 +20,18 @@ async def get_user_categories(user_id: str = Query(None, alias='user_id'),
 @router.post('/')
 async def create_expense(expense_data: ExpenseCreate,
                          current_user: User = Depends(get_current_user)):
-    user_id = expense_data.user_id
+    user_id = expense_data.user_id or current_user.id
     response = await Expenses(user_id).create_expense(from_type='n8n', payload=expense_data)
+
+    return JSONResponse(content=response, status_code=response['status_code'])
+
+
+@router.delete('/')
+async def soft_delete_expense(expense_id: ExpenseDelete,
+                              current_user: User = Depends(get_current_user)):
+    user_id = current_user.id
+
+    response = await Expenses(user_id, expense_id.id).soft_delete_expense()
 
     return JSONResponse(content=response, status_code=response['status_code'])
 

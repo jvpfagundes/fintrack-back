@@ -1,21 +1,24 @@
 from app.core.sql_async import SQLQueryAsync
 from app.schemas.expenses import ExpenseCreate
 from app.services.decorator import Response
+from app.services.exception import ValidationError
 from app.utils.date import str_to_date, str_to_time
 
 class Expenses(SQLQueryAsync):
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: str, expense_id: str = None):
         super().__init__()
         self.user_id = user_id
+        self.id = expense_id
 
     @Response(desc_error="Error creating expense", return_list=[])
     async def create_expense(self, from_type: str, payload: ExpenseCreate):
         dict_insert: dict = {
-            'user_id': payload.user_id,
+            'user_id': payload.user_id or self.user_id,
             'expense_date': str_to_date(expense_date=payload.date),
             'expense_time': str_to_time(expense_time=payload.time),
             'amount': payload.amount,
             'category_id': payload.category_id,
+            'description': payload.description,
         }
         expense_id: int = await self.insert('expenses', dict_insert=dict_insert)
 
@@ -76,13 +79,16 @@ class Expenses(SQLQueryAsync):
         return await self.select(f"""
         select to_char(e.expense_date, 'dd/mm/yyyy') as expense_date,
                e.amount::float as value,
-               c.name as category_name
+               c.name as category_name,
+               e.description,
+               e.id::varchar
         from expenses e 
         join expense_category c 
             on c.id = e.category_id
         where e.status = true 
               and e.user_id = :user_id
               {where_date};
+        order by created_at desc 
         """, parameters=params)
 
     @Response(desc_error="Error fetching categories graphic.", return_list=['categories_list'])
@@ -134,3 +140,18 @@ class Expenses(SQLQueryAsync):
         {where_date}
         group by e.expense_date;
         """, parameters=params)
+
+
+    @Response(desc_error="Error deleting expense.", return_list=[])
+    async def soft_delete_expense(self):
+        if await self.validate_expense():
+            result = await self.disable('expenses', dict_filter=dict(id=self.id))
+            return result
+        else:
+            raise ValidationError('Expense not found.')
+
+
+    async def validate_expense(self):
+        return self.select(f"""
+        select true from expenses where user_id = :user_id and id = :expense_id
+        """, parameters=dict(user_id=self.user_id, expense_id=self.id), is_first=True, is_values_list=True) or False

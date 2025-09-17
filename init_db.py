@@ -43,7 +43,7 @@ CREATE TABLE expenses (
     deleted_at TIMESTAMPTZ,
     expense_date DATE NOT NULL,
     expense_time TIME NOT NULL,
-
+    description text,
     CONSTRAINT fk_expenses_user FOREIGN KEY (user_id)
         REFERENCES users (id) ON DELETE NO ACTION,
 

@@ -8,3 +8,9 @@ class ExpenseCreate(BaseModel):
     date: str
     time: str
     user_id: Optional[str] = None
+    description: Optional[str] = None
+
+
+
+class ExpenseDelete(BaseModel):
+    id: str
