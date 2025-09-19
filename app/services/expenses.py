@@ -26,9 +26,13 @@ class Expenses(SQLQueryAsync):
 
     @Response(desc_error="Error fetching categories.", return_list=["categories_list"])
     async def get_categories(self):
-        return await self.select("""
+        if self.user_id:
+            or_filter = 'or user_id = :user_id'
+        else:
+            or_filter = ''
+        return await self.select(f"""
         select id::varchar, name from public.expense_category 
-        where status = true and (user_id isnull or user_id = :user_id)
+        where status = true and (user_id isnull {or_filter})
         """, parameters=dict(user_id=self.user_id))
 
 
