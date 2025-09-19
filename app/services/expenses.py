@@ -87,8 +87,8 @@ class Expenses(SQLQueryAsync):
             on c.id = e.category_id
         where e.status = true 
               and e.user_id = :user_id
-              {where_date};
-        order by created_at desc 
+              {where_date}
+        order by e.expense_date desc, e.created_at desc; 
         """, parameters=params)
 
     @Response(desc_error="Error fetching categories graphic.", return_list=['categories_list'])
