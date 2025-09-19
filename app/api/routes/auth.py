@@ -44,10 +44,8 @@ async def get_user_id(phone_number: str = Query(None, alias='phone_number'),
 
     response = await AuthService().get_user(phone_number=phone_number)
 
-    if not response.get('id'):
-        return {'status':False, 'desc_error': "User not found.", 'status_code': 500, 'user_id': None}
 
-    return {'user_id': response['id'], 'status': True, 'status_code': 200}
+    return {'user_id': response['id'] if response else '', 'status': True, 'status_code': 200}
 
 
 
